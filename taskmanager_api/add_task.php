@@ -1,21 +1,14 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
+require_once 'config.php';
+
 header("Content-Type: application/json");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { exit(); }
 
-$conn = new mysqli("localhost", "root", "", "taskmanager_db");
-
-if ($conn->connect_error) {
-    echo json_encode(["status" => "erro", "mensagem" => "Falha na conexão"]);
-    exit;
-}
-
 $data = json_decode(file_get_contents('php://input'), true);
 
 if (isset($data['titulo']) && isset($data['status'])) {
+    $conn = getDbConnection();
     $titulo = $conn->real_escape_string($data['titulo']);
     $status = $conn->real_escape_string($data['status']);
 

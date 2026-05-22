@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platfo
 import { ShieldAlert, UserPlus, Building, Mail, Lock, User, Briefcase, UserCheck, ChevronDown, Layers } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useRouter } from 'expo-router';
+import { getApiUrl } from '@/config/environment';
 
 export default function AdminPage() {
   const router = useRouter();
@@ -46,16 +47,12 @@ export default function AdminPage() {
     verificarPermissoes();
   }, []);
 
-  const getUrl = (endpoint: string) => {
-    return Platform.OS === 'web' 
-      ? `http://localhost/taskmanager_api/${endpoint}` 
-      : `http://172.20.10.5/taskmanager_api/${endpoint}`;
-  };
+
 
   // Buscar Empresas
   const fetchEmpresas = async () => {
     try {
-      const res = await fetch(getUrl(`get_empresas.php`));
+      const res = await fetch(getApiUrl('get_empresas'));
       const data = await res.json();
       
       if (data.status === 'sucesso') {
@@ -79,7 +76,7 @@ export default function AdminPage() {
   const fetchDepartamentos = async (idEmpresa: string) => {
     setDepartamentoNome('A carregar...');
     try {
-      const res = await fetch(getUrl(`get_departamentos.php?empresa_id=${idEmpresa}`));
+      const res = await fetch(getApiUrl(`get_departamentos?empresa_id=${idEmpresa}`));
       const data = await res.json();
       
       if (data.status === 'sucesso') {
@@ -118,7 +115,7 @@ export default function AdminPage() {
     }
 
     try {
-      const res = await fetch(getUrl('admin_create_user.php'), {
+      const res = await fetch(getApiUrl('admin_create_user'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 

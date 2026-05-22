@@ -1,16 +1,17 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert } from 'react-native';
 import { Building, PlusCircle } from 'lucide-react-native';
+import { getApiUrl } from '@/config/environment';
 
 export default function CreateEmpresaPage() {
   const [nome, setNome] = useState('');
 
-  const getUrl = (endpoint: string) => Platform.OS === 'web' ? `http://localhost/taskmanager_api/${endpoint}` : `http://172.20.10.5/taskmanager_api/${endpoint}`;
+
 
   const handleCriar = async () => {
     if (!nome) return Alert.alert("Aviso", "Preencha o nome da empresa.");
     try {
-      const res = await fetch(getUrl('create_empresa.php'), {
+      const res = await fetch(getApiUrl('create_empresa'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome })

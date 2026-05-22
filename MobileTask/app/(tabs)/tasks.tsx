@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator, TouchableOpacity, Alert, Dimensions, Modal, TextInput, KeyboardAvoidingView, useWindowDimensions } from 'react-native';
 import { MessageSquare, Send, X, CheckCircle, Plus, Minus, Star } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApiUrl } from '@/config/environment';
 
 const isWeb = Platform.OS === 'web';
 
@@ -19,9 +20,7 @@ export default function TaskDashboard() {
   const [novoComentario, setNovoComentario] = useState('');
   const [loadingComments, setLoadingComments] = useState(false);
 
-  const getUrl = (endpoint: string) => isWeb 
-    ? `http://localhost/taskmanager_api/${endpoint}` 
-    : `http://172.20.10.5/taskmanager_api/${endpoint}`;
+
 
   useEffect(() => { fetchTarefas(); }, []);
 
@@ -33,10 +32,10 @@ export default function TaskDashboard() {
       try {
         const meuId = parsed.id || parsed.user_id; 
         const endpoint = parsed.role === 'manager' 
-          ? `get_manager_tasks.php?departamento_id=${parsed.departamento_id}`
-          : `get_my_tasks.php?user_id=${meuId}`;
+          ? `get_manager_tasks?departamento_id=${parsed.departamento_id}`
+          : `get_my_tasks?user_id=${meuId}`;
 
-        const res = await fetch(getUrl(endpoint));
+        const res = await fetch(getApiUrl(endpoint));
         const data = await res.json();
         if (data.status === 'sucesso') setTarefas(data.tarefas);
       } catch (e) { console.error(e); }
@@ -46,7 +45,7 @@ export default function TaskDashboard() {
 
   const handleToggleImportante = async (tarefaId: number) => {
     try {
-      await fetch(getUrl('toggle_importante.php'), {
+      await fetch(getApiUrl('toggle_importante'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tarefa_id: tarefaId })
@@ -61,7 +60,7 @@ export default function TaskDashboard() {
     if (newProgress > 100) newProgress = 100;
     if (newProgress < 0) newProgress = 0;
     try {
-      const res = await fetch(getUrl('update_task_progress.php'), {
+      const res = await fetch(getApiUrl('update_task_progress'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tarefa_id: tarefaId, progresso: newProgress })
@@ -80,7 +79,7 @@ export default function TaskDashboard() {
   const fetchComentarios = async (tarefaId: number) => {
     setLoadingComments(true);
     try {
-      const res = await fetch(getUrl(`get_comments.php?tarefa_id=${tarefaId}`));
+      const res = await fetch(getApiUrl(`get_comments?tarefa_id=${tarefaId}`));
       const data = await res.json();
       if (data.status === 'sucesso') setListaComentarios(data.comentarios || []);
     } catch (e) { console.error(e); }
@@ -91,7 +90,7 @@ export default function TaskDashboard() {
     if (!novoComentario.trim()) return;
     try {
       const meuId = user.id || user.user_id;
-      const res = await fetch(getUrl('add_comment.php'), {
+      const res = await fetch(getApiUrl('add_comment'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ tarefa_id: selectedTask.id, user_id: meuId, comentario: novoComentario })

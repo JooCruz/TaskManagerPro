@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator } from 'react-native';
 import { Users, Building, Layers, Mail, Briefcase, ShieldAlert } from 'lucide-react-native';
+import { getApiUrl } from '@/config/environment';
 
 export default function UsersListPage() {
   const [users, setUsers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const getUrl = (endpoint: string) => Platform.OS === 'web' ? `http://localhost/taskmanager_api/${endpoint}` : `http://172.20.10.5/taskmanager_api/${endpoint}`;
+
 
   useEffect(() => {
     fetchUsers();
@@ -14,7 +15,7 @@ export default function UsersListPage() {
 
   const fetchUsers = async () => {
     try {
-      const res = await fetch(getUrl('get_users.php'));
+      const res = await fetch(getApiUrl('get_users'));
       const data = await res.json();
       if (data.status === 'sucesso') {
         setUsers(data.users);

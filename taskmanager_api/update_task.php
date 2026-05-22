@@ -1,7 +1,5 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once 'config.php';
 
 // Responde a pedidos "pre-flight" do browser
 if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
@@ -9,7 +7,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
     exit();
 }
 
-$conn = new mysqli("localhost", "root", "", "taskmanager_db");
+$conn = getDbConnection();
 
 $data = json_decode(file_get_contents('php://input'), true);
 

@@ -9,13 +9,13 @@ export default function CreateDepartamentoPage() {
   const [empresaNome, setEmpresaNome] = useState('A carregar...');
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const getUrl = (endpoint: string) => Platform.OS === 'web' ? `http://localhost/taskmanager_api/${endpoint}` : `http://172.20.10.5/taskmanager_api/${endpoint}`;
+
 
   useEffect(() => { fetchEmpresas(); }, []);
 
   const fetchEmpresas = async () => {
     try {
-      const res = await fetch(getUrl(`get_empresas.php`));
+      const res = await fetch(getApiUrl('get_empresas'));
       const data = await res.json();
       if (data.status === 'sucesso' && data.empresas.length > 0) {
         setEmpresas(data.empresas);
@@ -30,7 +30,7 @@ export default function CreateDepartamentoPage() {
   const handleCriar = async () => {
     if (!nome || !empresaId) return Alert.alert("Aviso", "Preencha o nome e escolha a empresa.");
     try {
-      const res = await fetch(getUrl('create_departamento.php'), {
+      const res = await fetch(getApiUrl('create_departamento'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ nome, empresa_id: empresaId })

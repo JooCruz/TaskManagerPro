@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator, TouchableOpacity, Modal, TextInput, Alert, useWindowDimensions } from 'react-native';
 import { Plus, AlertCircle, Star, CheckCircle, Clock, TrendingUp, X, User, Calendar as CalendarIcon, Clock3, Share2 } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApiUrl } from '@/config/environment';
 
 const isWeb = Platform.OS === 'web';
 
@@ -34,9 +35,7 @@ export default function ExploreDashboard() {
   const [dataEntrega, setDataEntrega] = useState('');
   const [horaEntrega, setHoraEntrega] = useState('09:00');
 
-  const getUrl = (endpoint: string) => isWeb 
-    ? `http://localhost/taskmanager_api/${endpoint}` 
-    : `http://172.20.10.5/taskmanager_api/${endpoint}`;
+
 
   useEffect(() => {
     const loadData = async () => {
@@ -53,8 +52,8 @@ export default function ExploreDashboard() {
 
   const fetchDashboardData = async (userId: number, role: string, deptId: number) => {
     try {
-      const endpoint = role === 'manager' ? `get_manager_tasks.php?departamento_id=${deptId}` : `get_my_tasks.php?user_id=${userId}`;
-      const res = await fetch(getUrl(endpoint));
+      const endpoint = role === 'manager' ? `get_manager_tasks?departamento_id=${deptId}` : `get_my_tasks?user_id=${userId}`;
+      const res = await fetch(getApiUrl(endpoint));
       const data = await res.json();
       if (data.status === 'sucesso') setTarefas(data.tarefas);
     } catch (e) { console.error(e); }
@@ -63,7 +62,7 @@ export default function ExploreDashboard() {
 
   const fetchTeam = async (deptId: number) => {
     try {
-      const res = await fetch(getUrl(`get_team.php?departamento_id=${deptId}`));
+      const res = await fetch(getApiUrl(`get_team?departamento_id=${deptId}`));
       const data = await res.json();
       if (data.status === 'sucesso') setTeam(data.team);
     } catch (e) { console.error(e); }
@@ -83,7 +82,7 @@ export default function ExploreDashboard() {
       data_entrega: dataEntrega, hora_entrega: horaEntrega || "09:00"
     };
     try {
-      const res = await fetch(getUrl('create_task.php'), {
+      const res = await fetch(getApiUrl('create_task'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)

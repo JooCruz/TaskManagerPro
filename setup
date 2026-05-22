@@ -1,0 +1,22 @@
+#!/bin/bash
+# SETUP RÁPIDO - TaskManager Pro
+# Este ficheiro permite escolher a plataforma automaticamente
+
+echo ""
+echo "╔════════════════════════════════════════════╗"
+echo "║   TaskManager Pro - Setup Rápido          ║"
+echo "╚════════════════════════════════════════════╝"
+echo ""
+
+# Detectar sistema operacional
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "win32" ]]; then
+    echo "🖥️  Sistema: Windows detectado"
+    echo ""
+    echo "Executando: .\setup.ps1"
+    powershell -ExecutionPolicy Bypass -File setup.ps1
+else
+    echo "🐧 Sistema: Linux/Mac detectado"
+    echo ""
+    echo "Executando: bash setup.sh"
+    bash setup.sh
+fi

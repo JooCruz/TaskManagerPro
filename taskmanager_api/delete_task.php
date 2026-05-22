@@ -1,10 +1,9 @@
 <?php
-header('Access-Control-Allow-Origin: *');
-header('Access-Control-Allow-Methods: POST, OPTIONS');
-header('Access-Control-Allow-Headers: Content-Type');
+require_once 'config.php';
+
 header('Content-Type: application/json');
 
-$conn = new mysqli("localhost", "root", "", "taskmanager_db");
+$conn = getDbConnection();
 
 $data = json_decode(file_get_contents('php://input'), true);
 

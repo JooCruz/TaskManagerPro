@@ -1,23 +1,16 @@
 <?php
+require_once 'config.php';
+
 // Isto impede o PHP de cuspir erros HTML que partem o nosso JSON
 error_reporting(E_ALL);
 ini_set('display_errors', 0);
-
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: POST, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
     http_response_code(200);
     exit();
 }
 
-$conn = new mysqli("localhost", "root", "", "taskmanager_db");
-
-if ($conn->connect_error) {
-    echo json_encode(["status" => "erro", "mensagem" => "Falha na conexão à BD."]);
-    exit();
-}
+$conn = getDbConnection();
 
 $data = json_decode(file_get_contents("php://input"));
 

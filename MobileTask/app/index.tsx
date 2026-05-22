@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, Platform, ActivityIndicator, Alert, KeyboardAvoidingView, ScrollView, useWindowDimensions } from 'react-native';
-import { Mail, Lock, ArrowRight, Eye, EyeOff } from 'lucide-react-native';
+import { Mail, Lock, ArrowRight, Eye, EyeOff, Check } from 'lucide-react-native';
 import { router } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApiUrl } from '@/config/environment';
 
 const isWeb = Platform.OS === 'web';
 
@@ -14,10 +15,24 @@ export default function LoginScreen() {
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [rememberMe, setRememberMe] = useState(false);
 
-  const getUrl = (endpoint: string) => isWeb 
-    ? `http://localhost/taskmanager_api/${endpoint}` 
-    : `http://172.20.10.5/taskmanager_api/${endpoint}`;
+  useEffect(() => {
+    const loadSavedCredentials = async () => {
+      try {
+        const savedEmail = await AsyncStorage.getItem('saved_email');
+        const savedPassword = await AsyncStorage.getItem('saved_password');
+        if (savedEmail && savedPassword) {
+          setEmail(savedEmail);
+          setPassword(savedPassword);
+          setRememberMe(true);
+        }
+      } catch (error) {
+        console.error('Erro ao carregar credenciais', error);
+      }
+    };
+    loadSavedCredentials();
+  }, []);
 
   const handleLogin = async () => {
     if (!email || !password) {
@@ -27,7 +42,7 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
-      const res = await fetch(getUrl('login.php'), {
+      const res = await fetch(getApiUrl('login'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -38,6 +53,16 @@ export default function LoginScreen() {
         const data = JSON.parse(text);
         if (data.status === 'sucesso') {
           await AsyncStorage.setItem('user_data', JSON.stringify(data.user));
+          
+          // Guardar ou remover credenciais
+          if (rememberMe) {
+            await AsyncStorage.setItem('saved_email', email);
+            await AsyncStorage.setItem('saved_password', password);
+          } else {
+            await AsyncStorage.removeItem('saved_email');
+            await AsyncStorage.removeItem('saved_password');
+          }
+          
           router.replace('/(tabs)/explore');
         } else {
           Alert.alert('Erro', data.mensagem);
@@ -82,6 +107,18 @@ export default function LoginScreen() {
               </TouchableOpacity>
             </View>
 
+            <View style={styles.rememberMeContainer}>
+              <TouchableOpacity 
+                style={[styles.checkbox, rememberMe && styles.checkboxChecked]}
+                onPress={() => setRememberMe(!rememberMe)}
+              >
+                {rememberMe && <Check size={16} color="white" />}
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => setRememberMe(!rememberMe)}>
+                <Text style={styles.rememberMeText}>Lembrar-me</Text>
+              </TouchableOpacity>
+            </View>
+
             <TouchableOpacity style={styles.loginBtn} onPress={handleLogin} disabled={loading}>
               {loading ? <ActivityIndicator color="white" /> : <><Text style={styles.loginBtnText}>Entrar</Text><ArrowRight size={20} color="white" /></>}
             </TouchableOpacity>
@@ -116,6 +153,13 @@ const styles = StyleSheet.create({
   inputLabel: { fontSize: 10, fontWeight: '900', color: '#94A3B8', marginBottom: 8, letterSpacing: 1 },
   inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#F8FAFC', borderRadius: 12, borderWidth: 1, borderColor: '#E2E8F0', marginBottom: 20, height: 55 },
   input: { flex: 1, paddingHorizontal: 15, fontSize: 15, color: '#1E293B', height: '100%' },
+  
+  // CHECKBOX E LEMBRAR-ME
+  rememberMeContainer: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 20 },
+  checkbox: { width: 20, height: 20, borderWidth: 2, borderColor: '#E2E8F0', borderRadius: 4, justifyContent: 'center', alignItems: 'center' },
+  checkboxChecked: { backgroundColor: '#3B82F6', borderColor: '#3B82F6' },
+  rememberMeText: { fontSize: 14, color: '#64748B', fontWeight: '500' },
+  
   loginBtn: { backgroundColor: '#3B82F6', flexDirection: 'row', height: 55, borderRadius: 12, justifyContent: 'center', alignItems: 'center', gap: 10, marginTop: 10 },
   loginBtnText: { color: 'white', fontWeight: 'bold', fontSize: 16 },
   

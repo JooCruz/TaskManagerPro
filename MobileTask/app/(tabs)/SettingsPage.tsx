@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, TextInput, Platform, Alert } from 'react-native';
 import { User, Mail, Lock } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getApiUrl } from '@/config/environment';
 
 export default function SettingsPage() {
   const [nome, setNome] = useState('');
@@ -30,11 +31,7 @@ export default function SettingsPage() {
     loadUserData();
   }, []);
 
-  const getUrl = (endpoint: string) => {
-    return Platform.OS === 'web' 
-      ? `http://localhost/taskmanager_api/${endpoint}` 
-      : `http://172.20.10.5/taskmanager_api/${endpoint}`;
-  };
+
 
   const mostrarAlerta = (titulo: string, mensagem: string) => {
     if (Platform.OS === 'web') alert(`${titulo}\n\n${mensagem}`);
@@ -48,7 +45,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const res = await fetch(getUrl('update_profile.php'), {
+      const res = await fetch(getApiUrl('update_profile'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email_atual: emailOriginal, novo_nome: nome, novo_email: email })
@@ -85,7 +82,7 @@ export default function SettingsPage() {
     }
 
     try {
-      const res = await fetch(getUrl('update_password.php'), {
+      const res = await fetch(getApiUrl('update_password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: emailOriginal, senha_atual: senhaAtual, nova_senha: novaSenha })

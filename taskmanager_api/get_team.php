@@ -1,13 +1,12 @@
 <?php
+require_once 'config.php';
+
 ob_clean(); 
 header("Content-Type: application/json; charset=UTF-8");
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, OPTIONS");
-header("Access-Control-Allow-Headers: Content-Type, Authorization");
 
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit(); }
 
-$conn = new mysqli("localhost", "root", "", "taskmanager_db");
+$conn = getDbConnection();
 
 if(isset($_GET['departamento_id'])) {
     $dept_id = (int)$_GET['departamento_id'];

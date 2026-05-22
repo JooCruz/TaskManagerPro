@@ -1,19 +1,7 @@
 <?php
-header("Access-Control-Allow-Origin: *");
-header("Access-Control-Allow-Methods: GET, POST, OPTIONS, PUT, DELETE");
-header("Access-Control-Allow-Headers: Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With");
+require_once 'config.php';
 
-// Responde a pedidos "pre-flight" do browser
-if ($_SERVER['REQUEST_METHOD'] == 'OPTIONS') {
-    http_response_code(200);
-    exit();
-}
-
-$conn = new mysqli("localhost", "root", "", "taskmanager_db");
-
-if ($conn->connect_error) {
-    die(json_encode(["status" => "erro", "mensagem" => "Falha na conexão: " . $conn->connect_error]));
-}
+$conn = getDbConnection();
 
 // Verifica se a app enviou o ID da empresa
 if(isset($_GET['empresa_id'])) {
