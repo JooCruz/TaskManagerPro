@@ -1,6 +1,7 @@
 # 🚀 TaskManager Pro
 
 > 📱 Repositório: [github.com/JooCruz/TaskManagerPro](https://github.com/JooCruz/TaskManagerPro)
+> 🌐 Demo Web: [taskmanager-v2.vercel.app](https://taskmanager-v2.vercel.app)
 
 ## O que é?
 
@@ -31,6 +32,10 @@ Desenvolvida com **React Native (Expo)** no frontend, **Node.js + TypeScript** n
 
 ### Base de Dados
 - [Supabase](https://supabase.com/) (PostgreSQL gerido na cloud)
+
+### Hosting
+- [Vercel](https://vercel.com/) (deploy web)
+- [Railway](https://railway.app/) (backend em produção)
 
 ---
 
@@ -73,6 +78,7 @@ TaskManagerPro-main/
     │   └── environment.ts        # Configuração centralizada da API
     ├── hooks/
     ├── assets/
+    ├── vercel.json               # Configuração de routing para Vercel
     ├── .env.local                # Variáveis de ambiente (não incluído no git)
     └── package.json
 ```
@@ -116,10 +122,40 @@ EXPO_PUBLIC_BACKEND_PROTOCOL=http
 
 
 npx expo start --clear
-
-
 ```
 
+---
+
+## 🌐 Deploy Web (Vercel)
+
+A versão web está disponível em: **[taskmanager-v2.vercel.app](https://taskmanager-v2.vercel.app)**
+
+### Como fazer deploy
+
+```powershell
+# 1. Exporta a app para web
+npx expo export --platform web
+
+# 2. Copia o vercel.json para dentro da pasta dist (necessário para routing)
+copy vercel.json dist\vercel.json
+
+# 3. Faz deploy para o Vercel
+vercel dist --prod --project taskmanager-v2
+```
+
+### Variáveis de ambiente no Vercel
+
+No painel do Vercel (Settings → Environment Variables), adiciona:
+
+| Variável | Valor |
+|---|---|
+| `EXPO_PUBLIC_BACKEND_HOST` | `taskmanagerpro-production-6aa8.up.railway.app` |
+| `EXPO_PUBLIC_BACKEND_PORT` | `443` |
+| `EXPO_PUBLIC_BACKEND_PROTOCOL` | `https` |
+
+> **Nota:** O ficheiro `vercel.json` é necessário para o routing funcionar corretamente com o Expo Router. Sem ele, as rotas como `/explore` retornam 404.
+
+---
 
 ## 🔌 Variáveis de Ambiente
 
@@ -140,6 +176,7 @@ npx expo start --clear
 | `EXPO_PUBLIC_BACKEND_PORT` | Porta do servidor (padrão: `8000`) |
 | `EXPO_PUBLIC_BACKEND_PROTOCOL` | `http` ou `https` |
 
+---
 
 ## 🔑 Credenciais de Teste
 
@@ -188,6 +225,10 @@ netstat -ano | findstr :8000
 taskkill /PID <PID> /F
 ```
 
+### ❌ Vercel mostra página em branco ou 404
+- Confirma que o `vercel.json` foi copiado para dentro da pasta `dist` antes do deploy
+- Usa sempre o script `deploy.ps1` em vez de fazer deploy manualmente
+
 ---
 
 ## 🔐 Segurança
@@ -211,4 +252,3 @@ Projeto académico — 2026
 
 *Última atualização: Junho de 2026*  
 *Status: ✅ Em desenvolvimento*
-
