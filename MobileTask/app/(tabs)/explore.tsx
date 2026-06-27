@@ -31,7 +31,7 @@ const formatarHoraSQL = (texto: string) => {
 };
 
 export default function ExploreDashboard() {
-  const { width } = useWindowDimensions();
+  const { width, height } = useWindowDimensions();
   const isMobile = width < 768;
 
   // Responsive font sizes
@@ -202,13 +202,13 @@ export default function ExploreDashboard() {
           keyboardVerticalOffset={Platform.OS === 'ios' ? 95 : 0}
           style={[styles.overlay, isMobile && styles.overlayMobile]}
         >
-          <View style={[styles.modal, isMobile && styles.modalMobile]}>
-            <View style={styles.modalHeader}>
+          <View style={[styles.modal, isMobile && styles.modalMobile, isMobile && { maxHeight: Math.max(420, height - 32) }]}>
+            <View style={[styles.modalHeader, isMobile && styles.modalHeaderMobile]}>
               <Text style={[styles.modalTitle, { fontSize: modalTitleSize }]}>Atribuir Tarefa</Text>
               <TouchableOpacity onPress={() => setModalCreate(false)}><X size={24} color="#94A3B8" /></TouchableOpacity>
             </View>
             <ScrollView
-              style={styles.modalBody}
+              style={[styles.modalBody, isMobile && styles.modalBodyMobile]}
               contentContainerStyle={[styles.modalBodyContent, isMobile && styles.modalBodyContentMobile]}
               showsVerticalScrollIndicator={false}
               keyboardShouldPersistTaps="handled"
@@ -331,32 +331,34 @@ const styles = StyleSheet.create({
   favBarFill: { height: '100%', backgroundColor: '#1e40af' },
   favPercent: { fontSize: 13, fontWeight: '700', color: '#64748b' },
   overlay: { flex: 1, backgroundColor: 'rgba(15, 23, 42, 0.5)', justifyContent: 'center', alignItems: 'center', padding: 18 },
-  overlayMobile: { justifyContent: 'flex-end', paddingHorizontal: 12, paddingBottom: 20 },
+  overlayMobile: { justifyContent: 'center', paddingHorizontal: 12, paddingVertical: 16 },
   modal: { backgroundColor: 'white', width: '100%', maxWidth: 520, padding: 32, borderRadius: 16, elevation: 8, maxHeight: '90%' },
-  modalMobile: { width: '100%', padding: 20, maxHeight: '88%', borderRadius: 20 },
+  modalMobile: { width: '100%', padding: 18, borderRadius: 20 },
   modalHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 24 },
+  modalHeaderMobile: { marginBottom: 18 },
   modalBody: { width: '100%', minHeight: 0 },
+  modalBodyMobile: { flexGrow: 0, flexShrink: 1 },
   modalBodyContent: { paddingBottom: 28 },
-  modalBodyContentMobile: { paddingBottom: 10 },
+  modalBodyContentMobile: { paddingBottom: 18 },
   modalTitle: { fontSize: 24, fontWeight: '800', color: '#0f172a' },
   label: { fontSize: 12, fontWeight: '700', color: '#475569', marginBottom: 11, letterSpacing: 0.4, textTransform: 'uppercase' },
   userChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 8, backgroundColor: '#f8fafc', marginRight: 10, borderWidth: 1, borderColor: '#e2e8f0' },
   userChipActive: { backgroundColor: '#1e40af', borderColor: '#1e40af' },
   userChipText: { fontSize: 13, fontWeight: '700', color: '#64748b' },
-  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: 9, borderWidth: 1.5, borderColor: '#e2e8f0', marginBottom: 20, minHeight: 58, paddingHorizontal: 14 },
+  inputWrapper: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: 9, borderWidth: 1.5, borderColor: '#e2e8f0', marginBottom: 16, minHeight: 58, paddingHorizontal: 14 },
   inputIcon: { marginLeft: 12 },
   textInput: { flex: 1, fontSize: 15, color: '#000000', minHeight: 56, fontWeight: '500' },
-  textAreaWrapper: { backgroundColor: '#f8fafc', borderRadius: 14, borderWidth: 1.5, borderColor: '#e2e8f0', padding: 14, marginBottom: 20 },
-  textAreaInput: { minHeight: 110, fontSize: 15, color: '#0f172a', fontWeight: '500' },
+  textAreaWrapper: { backgroundColor: '#f8fafc', borderRadius: 14, borderWidth: 1.5, borderColor: '#e2e8f0', padding: 14, marginBottom: 16 },
+  textAreaInput: { minHeight: 92, fontSize: 15, color: '#0f172a', fontWeight: '500' },
   dateTimeGrid: { flexDirection: 'row', marginBottom: 18, gap: 14, flexWrap: 'wrap' },
   dateTimeGridMobile: { flexDirection: 'column', marginBottom: 14, gap: 14, flexWrap: 'nowrap' },
   dateTimeField: { flex: 1, minWidth: 0 },
   dateTimeFieldLeft: { marginRight: 12 },
-  dateTimeFieldMobile: { flex: 0, width: '100%', minWidth: 0, marginRight: 0, marginBottom: 0 },
+  dateTimeFieldMobile: { width: '100%', minWidth: 0, marginRight: 0, marginBottom: 0, flexGrow: 0, flexShrink: 0, flexBasis: 'auto' },
   fieldLabel: { fontSize: 11, fontWeight: '800', color: '#64748b', marginBottom: 7, letterSpacing: 0.4 },
-  dateTimeControl: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: 9, borderWidth: 1.5, borderColor: '#e2e8f0', minHeight: 58, width: '100%' },
-  dateTimeTextInput: { flex: 1, minWidth: 0, paddingHorizontal: 12, fontSize: 15, color: '#000000', height: '100%', fontWeight: '600' },
-  saveBtn: { backgroundColor: '#1e40af', padding: 16, borderRadius: 9, alignItems: 'center', marginTop: 18, elevation: 2, shadowColor: '#1e40af', shadowOpacity: 0.25, shadowRadius: 8 },
+  dateTimeControl: { flexDirection: 'row', alignItems: 'center', backgroundColor: '#f8fafc', borderRadius: 9, borderWidth: 1.5, borderColor: '#e2e8f0', minHeight: 58, width: '100%', overflow: 'hidden' },
+  dateTimeTextInput: { flex: 1, minWidth: 0, paddingHorizontal: 12, fontSize: 15, color: '#000000', minHeight: 56, fontWeight: '600' },
+  saveBtn: { backgroundColor: '#1e40af', padding: 16, borderRadius: 9, alignItems: 'center', marginTop: 8, elevation: 2, shadowColor: '#1e40af', shadowOpacity: 0.25, shadowRadius: 8 },
   saveBtnText: { color: 'white', fontWeight: '700', fontSize: 15, letterSpacing: 0.2 },
   emptyCard: { padding: 28, backgroundColor: '#fafbfc', borderRadius: 10, alignItems: 'center', borderWidth: 1, borderColor: '#e2e8f0' },
   emptyText: { color: '#94a3b8', fontSize: 14, fontWeight: '600' }
