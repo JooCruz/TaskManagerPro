@@ -72,7 +72,7 @@ export default function AppLayout() {
               <View>
                 <View style={styles.logoContainer}>
                   <CheckSquare color="white" size={24} />
-                  <Text style={styles.logoText}>TaskManager</Text>
+                  <Text style={styles.logoText}>TaskManagerPro</Text>
                 </View>
 
                 <View style={styles.profileSection}>
