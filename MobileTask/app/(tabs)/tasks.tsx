@@ -1,16 +1,26 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator, TouchableOpacity, Alert, Dimensions, Modal, TextInput, KeyboardAvoidingView, useWindowDimensions } from 'react-native';
-import { MessageSquare, Send, X, CheckCircle, Plus, Minus, Star } from 'lucide-react-native';
+import { View, Text, StyleSheet, ScrollView, Platform, ActivityIndicator, TouchableOpacity, Alert, Modal, TextInput, KeyboardAvoidingView, useWindowDimensions } from 'react-native';
+import { MessageSquare, Send, X, CheckCircle, Plus, Minus, Star, Paperclip, FileText, ExternalLink } from 'lucide-react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { getApiUrl } from '../../config/environment';
+import { createClient } from '@supabase/supabase-js';
+
+const supabase = createClient(
+  process.env.EXPO_PUBLIC_SUPABASE_URL!,
+  process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
+);
 
 const isWeb = Platform.OS === 'web';
+
+const mostrarAlerta = (titulo: string, mensagem: string) => {
+  if (Platform.OS === 'web') alert(`${titulo}\n\n${mensagem}`);
+  else Alert.alert(titulo, mensagem);
+};
 
 export default function TaskDashboard() {
   const { width } = useWindowDimensions();
   const isMobile = width < 768;
 
-  // Responsive font sizes
   const headerTitleSize = isMobile ? 22 : 32;
   const taskTitleSize = isMobile ? 16 : 18;
   const modalTitleSize = isMobile ? 18 : 20;
@@ -26,7 +36,8 @@ export default function TaskDashboard() {
   const [loadingComments, setLoadingComments] = useState(false);
   const [sendingComment, setSendingComment] = useState(false);
 
-
+  const [uploadingDoc, setUploadingDoc] = useState<number | null>(null);
+  const [documentos, setDocumentos] = useState<{ [tarefaId: number]: any[] }>({});
 
   useEffect(() => { fetchTarefas(); }, []);
 
@@ -43,10 +54,77 @@ export default function TaskDashboard() {
 
         const res = await fetch(getApiUrl(endpoint));
         const data = await res.json();
-        if (data.status === 'sucesso') setTarefas(data.tarefas);
+        if (data.status === 'sucesso') {
+          setTarefas(data.tarefas);
+          data.tarefas.forEach((t: any) => fetchDocumentos(t.id));
+        }
       } catch (e) { console.error(e); }
     }
     setLoading(false);
+  };
+
+  const fetchDocumentos = async (tarefaId: number) => {
+    try {
+      const { data, error } = await supabase.storage
+        .from('task-documents')
+        .list(`tarefa-${tarefaId}/`);
+      
+      if (!error && data) {
+        setDocumentos(prev => ({ ...prev, [tarefaId]: data }));
+      }
+    } catch (e) { console.error(e); }
+  };
+
+  const handleUploadDocumento = async (tarefaId: number) => {
+    if (!isWeb) {
+      mostrarAlerta("Aviso", "Upload de documentos só disponível na versão web.");
+      return;
+    }
+
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.pdf,.doc,.docx,.xls,.xlsx,.png,.jpg,.jpeg,.zip';
+    input.onchange = async (e: any) => {
+      const file = e.target.files[0];
+      if (!file) return;
+
+      if (file.size > 10 * 1024 * 1024) {
+        alert("Ficheiro demasiado grande. Máximo 10MB.");
+        return;
+      }
+
+      setUploadingDoc(tarefaId);
+      try {
+        const fileName = `tarefa-${tarefaId}/${Date.now()}-${file.name}`;
+        const { error } = await supabase.storage
+          .from('task-documents')
+          .upload(fileName, file);
+
+        if (error) {
+          alert(`Erro ao fazer upload: ${error.message}`);
+        } else {
+          alert("Documento submetido com sucesso!");
+          fetchDocumentos(tarefaId);
+        }
+      } catch (e) {
+        alert("Erro ao fazer upload do documento.");
+      } finally {
+        setUploadingDoc(null);
+      }
+    };
+    input.click();
+  };
+
+  const handleVerDocumento = async (tarefaId: number, fileName: string) => {
+    const { data } = supabase.storage
+      .from('task-documents')
+      .getPublicUrl(`tarefa-${tarefaId}/${fileName}`);
+    
+    if (isWeb) {
+      window.open(data.publicUrl, '_blank');
+    } else {
+      mostrarAlerta("Link", data.publicUrl);
+    }
   };
 
   const handleToggleImportante = async (tarefaId: number) => {
@@ -73,7 +151,7 @@ export default function TaskDashboard() {
       });
       const data = await res.json();
       if(data.status === 'sucesso') fetchTarefas();
-    } catch (e) { Alert.alert("Erro", "Falha ao atualizar."); }
+    } catch (e) { mostrarAlerta("Erro", "Falha ao atualizar."); }
   };
 
   const openComments = (tarefa: any) => {
@@ -98,7 +176,7 @@ export default function TaskDashboard() {
 
     if (!comentarioLimpo || sendingComment) return;
     if (!selectedTask?.id || !meuId) {
-      Alert.alert("Erro", "Não foi possível identificar a tarefa ou o utilizador.");
+      mostrarAlerta("Erro", "Não foi possível identificar a tarefa ou o utilizador.");
       return;
     }
 
@@ -114,11 +192,10 @@ export default function TaskDashboard() {
         setNovoComentario('');
         await fetchComentarios(selectedTask.id);
       } else {
-        Alert.alert("Erro", data.mensagem || data.message || "Não foi possível enviar o comentário.");
+        mostrarAlerta("Erro", data.mensagem || data.message || "Não foi possível enviar o comentário.");
       }
     } catch (e) {
-      console.error(e);
-      Alert.alert("Erro", "Falha ao ligar ao servidor.");
+      mostrarAlerta("Erro", "Falha ao ligar ao servidor.");
     } finally {
       setSendingComment(false);
     }
@@ -131,8 +208,8 @@ export default function TaskDashboard() {
       <ScrollView style={styles.container} contentContainerStyle={styles.scrollContent} showsHorizontalScrollIndicator={false} bounces={false}>
         <View style={styles.innerWrapper}>
           <View style={styles.headerArea}>
-             <Text style={[styles.headerTitle, { fontSize: headerTitleSize }]}>{user?.role === 'manager' ? 'Tarefas da Equipa' : 'Minhas Tarefas'}</Text>
-             <Text style={styles.headerSubtitle}>{user?.role === 'manager' ? 'Monitoriza o progresso da tua equipa' : 'Gerencia o teu trabalho diário'}</Text>
+            <Text style={[styles.headerTitle, { fontSize: headerTitleSize }]}>{user?.role === 'manager' ? 'Tarefas da Equipa' : 'Minhas Tarefas'}</Text>
+            <Text style={styles.headerSubtitle}>{user?.role === 'manager' ? 'Monitoriza o progresso da tua equipa' : 'Gerencia o teu trabalho diário'}</Text>
           </View>
 
           <View style={styles.tasksWrapper}>
@@ -140,14 +217,13 @@ export default function TaskDashboard() {
               <View key={t.id} style={[styles.taskCard, isMobile && { padding: 18 }]}>
                 <View style={styles.cardTop}>
                   <TouchableOpacity onPress={() => handleToggleImportante(t.id)}>
-                     <Star size={24} color={t.importante == 1 ? "#ECC94B" : "#E2E8F0"} fill={t.importante == 1 ? "#ECC94B" : "transparent"} />
+                    <Star size={24} color={t.importante == 1 ? "#ECC94B" : "#E2E8F0"} fill={t.importante == 1 ? "#ECC94B" : "transparent"} />
                   </TouchableOpacity>
                   <Text style={styles.dateText}>{t.data_entrega}</Text>
                 </View>
 
                 <Text style={[styles.taskTitle, { fontSize: taskTitleSize }]}>{t.titulo}</Text>
                 
-                {/* CORREÇÃO CIRÚRGICA: A usar 'funcionario_nome' vindo do teu PHP */}
                 {user?.role === 'manager' && (
                   <Text style={{ fontSize: 13, color: '#64748B', marginBottom: 15, fontWeight: '600' }}>
                     Responsável: <Text style={{ color: '#3B82F6' }}>{t.funcionario_nome || 'Membro'}</Text>
@@ -162,6 +238,49 @@ export default function TaskDashboard() {
                   <View style={styles.progressBg}>
                     <View style={[styles.progressFill, { width: `${t.progresso}%` }]} />
                   </View>
+                </View>
+
+                {/* DOCUMENTOS */}
+                <View style={styles.documentosSection}>
+                  <View style={styles.documentosHeader}>
+                    <Text style={styles.documentosLabel}>DOCUMENTOS</Text>
+                    {user?.role !== 'manager' && (
+                      <TouchableOpacity 
+                        style={styles.uploadBtn} 
+                        onPress={() => handleUploadDocumento(t.id)}
+                        disabled={uploadingDoc === t.id}
+                      >
+                        {uploadingDoc === t.id ? (
+                          <ActivityIndicator size="small" color="#1e40af" />
+                        ) : (
+                          <>
+                            <Paperclip size={14} color="#1e40af" />
+                            <Text style={styles.uploadBtnText}>Submeter</Text>
+                          </>
+                        )}
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                  
+                  {documentos[t.id] && documentos[t.id].length > 0 ? (
+                    <View style={styles.documentosList}>
+                      {documentos[t.id].map((doc, i) => (
+                        <TouchableOpacity 
+                          key={i} 
+                          style={styles.documentoItem}
+                          onPress={() => handleVerDocumento(t.id, doc.name)}
+                        >
+                          <FileText size={14} color="#3b82f6" />
+                          <Text style={styles.documentoNome} numberOfLines={1}>
+                            {doc.name.replace(/^\d+-/, '')}
+                          </Text>
+                          <ExternalLink size={12} color="#94a3b8" />
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  ) : (
+                    <Text style={styles.semDocumentos}>Sem documentos submetidos</Text>
+                  )}
                 </View>
 
                 <View style={[styles.cardActions, isMobile && { flexDirection: 'column', gap: 15 }]}>
@@ -200,7 +319,6 @@ export default function TaskDashboard() {
         </View>
       </ScrollView>
 
-      {/* MODAL DE COMENTÁRIOS */}
       <Modal visible={commentModal} transparent animationType="slide">
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
@@ -273,12 +391,21 @@ const styles = StyleSheet.create({
   cardTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 },
   dateText: { fontSize: 12, fontWeight: '700', color: '#000000', backgroundColor: '#f8fafc', paddingHorizontal: 11, paddingVertical: 6, borderRadius: 6, textTransform: 'uppercase', letterSpacing: 0.3 },
   taskTitle: { fontSize: 18, fontWeight: '800', color: '#000000', marginBottom: 6, letterSpacing: -0.2 },
-  progressSection: { marginBottom: 22 },
+  progressSection: { marginBottom: 16 },
   progressInfo: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10, flexWrap: 'wrap' },
   progressLabel: { fontSize: 12, fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.4 },
   progressPercent: { fontSize: 13, fontWeight: '800', color: '#0f172a' },
   progressBg: { height: 8, backgroundColor: '#e2e8f0', borderRadius: 4, overflow: 'hidden' },
   progressFill: { height: '100%', backgroundColor: '#1e40af', borderRadius: 4 },
+  documentosSection: { marginBottom: 16, padding: 14, backgroundColor: '#f8fafc', borderRadius: 8, borderWidth: 1, borderColor: '#e2e8f0' },
+  documentosHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 },
+  documentosLabel: { fontSize: 11, fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: 0.4 },
+  uploadBtn: { flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: '#dbeafe', paddingHorizontal: 10, paddingVertical: 6, borderRadius: 6 },
+  uploadBtnText: { fontSize: 12, fontWeight: '700', color: '#1e40af' },
+  documentosList: { gap: 8 },
+  documentoItem: { flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: 'white', padding: 10, borderRadius: 6, borderWidth: 1, borderColor: '#e2e8f0' },
+  documentoNome: { flex: 1, fontSize: 13, color: '#1e293b', fontWeight: '500' },
+  semDocumentos: { fontSize: 12, color: '#94a3b8', fontWeight: '500', textAlign: 'center', paddingVertical: 4 },
   cardActions: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#e2e8f0', paddingTop: 16 },
   stepper: { flexDirection: 'row', gap: 10, width: 'auto' },
   stepBtn: { width: 42, height: 42, borderRadius: 8, backgroundColor: '#f8fafc', justifyContent: 'center', alignItems: 'center', borderWidth: 1.5, borderColor: '#e2e8f0' },
